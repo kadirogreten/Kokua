@@ -1,0 +1,94 @@
+using DataAccessLayer;
+using MongoDB.Driver;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+using ServiceStack;
+
+namespace ServiceLayer
+{
+    public abstract class GenericRepository<TEntity> : IRepository<TEntity> where TEntity : class
+    {
+        protected readonly IKokuaDbContext _context;
+        public IMongoCollection<TEntity> DbSet { get; private set; }
+
+        /// constructor dependency injection
+        public GenericRepository(IKokuaDbContext context)
+        {
+            _context = context;
+        }
+        private void ConfigDbSet()
+        {
+            DbSet = _context.GetCollection<TEntity>(typeof(TEntity).Name);
+        }
+
+        public IEnumerable<TEntity> GetAll()
+        {
+            ConfigDbSet();
+            var liste = DbSet.FindSync(Builders<TEntity>.Filter.Empty);
+            return liste.ToEnumerable();
+        }
+
+        public async Task<IEnumerable<TEntity>> GetAllAsync()
+        {
+            ConfigDbSet();
+            var liste = await DbSet.FindAsync(Builders<TEntity>.Filter.Empty);
+
+            return liste.ToEnumerable();
+        }
+
+        public IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
+        {
+            ConfigDbSet();
+            var data = DbSet.Find(predicate);
+            return data.ToEnumerable();
+        }
+        public async Task<IEnumerable<TEntity>> WhereAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            ConfigDbSet();
+            var data = await DbSet.FindAsync(predicate);
+            return data.ToEnumerable();
+        }
+
+        public void Insert(TEntity entity)
+        {
+
+            ConfigDbSet();
+
+            _context.AddCommand(() => DbSet.InsertOneAsync(entity));
+        }
+
+        public virtual void Update(TEntity entity)
+        {
+
+            ConfigDbSet();
+            _context.AddCommand(() => DbSet.ReplaceOneAsync(Builders<TEntity>.Filter.Eq("_id", entity.GetId()), entity));
+        }
+
+        public void Delete(TEntity entity)
+        {
+
+            ConfigDbSet();
+            _context.AddCommand(() => DbSet.DeleteOneAsync(Builders<TEntity>.Filter.Eq("_id", entity)));
+        }
+
+        public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            ConfigDbSet();
+            var data = await DbSet.FindAsync(predicate);
+
+            return data.FirstOrDefault();
+        }
+
+        public TEntity Find(Expression<Func<TEntity, bool>> predicate)
+        {
+            var data = DbSet.Find(predicate);
+
+            return data.FirstOrDefault();
+        }
+
+    }
+}
