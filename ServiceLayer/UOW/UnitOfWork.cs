@@ -21,12 +21,17 @@ namespace ServiceLayer
 
             KokuaUser = new UserRepository(_context);
             KokuaRole = new UserRoleRepository(_context);
+            NeedProducts = new NeedProductsRepository(_context);
+            Needs = new NeedsRepository(_context);
 
         }
 
 
         public IUserRepository KokuaUser { get; private set; }
         public IUserRoleRepository KokuaRole { get; private set; }
+
+        public INeedsRepository Needs { get; private set; }
+        public INeedProductsRepository NeedProducts { get; private set; }
 
         public async Task<int> Complete()
         {

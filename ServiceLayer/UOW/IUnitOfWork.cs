@@ -8,6 +8,8 @@ namespace ServiceLayer
     {
         public IUserRepository KokuaUser { get; }
         public IUserRoleRepository KokuaRole { get; }
+        public INeedProductsRepository NeedProducts { get; }
+        public INeedsRepository Needs { get; }
 
         Task<int> Complete();
     }

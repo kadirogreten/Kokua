@@ -9,21 +9,23 @@ using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
+using Models.Entities;
 
 namespace Models
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum UserType
-    {
-        [Description("Volunteer")]
-        Volunteer,
-        [Description("Beneficiary")]
-        Beneficiary
-    }
+    
 
     public class KokuaUser : MongoUser
     {
+        public string WhoAmI { get; set; }
         public UserType UserType { get; set; }
+        public IEnumerable<Needs> Needs { get; set; }
+        public IEnumerable<Order> Orders { get; set; }
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        public DateTime? Age { get; set; }
+        public string Address { get; set; }
+        public string ProfileImage { get; set; }
     }
 
     public class CustomClaimsPrincipalFactory : UserClaimsPrincipalFactory<KokuaUser>
