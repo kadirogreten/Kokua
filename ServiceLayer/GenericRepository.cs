@@ -37,7 +37,7 @@ namespace ServiceLayer
             ConfigDbSet();
             var liste = await DbSet.FindAsync(Builders<TEntity>.Filter.Empty);
 
-            return liste.ToEnumerable();
+            return await liste.ToListAsync();
         }
 
         public IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
@@ -50,7 +50,7 @@ namespace ServiceLayer
         {
             ConfigDbSet();
             var data = await DbSet.FindAsync(predicate);
-            return data.ToEnumerable();
+            return await data.ToListAsync();
         }
 
         public void Insert(TEntity entity)
@@ -80,11 +80,12 @@ namespace ServiceLayer
             ConfigDbSet();
             var data = await DbSet.FindAsync(predicate);
 
-            return data.FirstOrDefault();
+            return await data.FirstOrDefaultAsync();
         }
 
         public TEntity Find(Expression<Func<TEntity, bool>> predicate)
         {
+            ConfigDbSet();
             var data = DbSet.Find(predicate);
 
             return data.FirstOrDefault();

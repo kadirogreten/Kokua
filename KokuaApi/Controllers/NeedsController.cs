@@ -79,14 +79,10 @@ namespace KokuaApi.Controllers
         //[Authorize(Roles = "Volunteer")]
         [HttpGet]
         [EnableCors("MyPolicy")]
-        public IActionResult GetBeneficiaryNeed()
+        public async Task<IActionResult> GetBeneficiaryNeed()
         {
-
+            var needsList = await _uow.Needs.WhereAsync(a => a.OrderStatus == OrderStatus.Waiting);
             IList<VolunteerNeedsResponse> response = new List<VolunteerNeedsResponse>();
-
-            var needsList = from m in _uow.Needs
-                            where m.OrderStatus == OrderStatus.Waiting
-                            select m;
 
             if (!needsList.Any())
             {
