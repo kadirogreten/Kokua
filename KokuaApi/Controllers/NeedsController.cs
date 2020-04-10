@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KokuaApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -74,5 +75,45 @@ namespace KokuaApi.Controllers
             return Ok();
 
         }
+        [Route("Get-Needs")]
+        //[Authorize(Roles = "Volunteer")]
+        [HttpGet]
+        [EnableCors("MyPolicy")]
+        public IActionResult GetBeneficiaryNeed()
+        {
+
+            IList<VolunteerNeedsResponse> response = new List<VolunteerNeedsResponse>();
+
+            var needsList = from m in _uow.Needs
+                            where m.OrderStatus == OrderStatus.Waiting
+                            select m;
+
+            if (!needsList.Any())
+            {
+                return Ok(new { IsSuccess = false, Result = response, Message = "Need list return empty value!" });
+            }
+
+
+            foreach (var item in needsList)
+            {
+                var data = new VolunteerNeedsResponse
+                {
+                    Title = item.Title,
+                    OrderStatus = item.OrderStatus,
+                    BeneficiaryUsername = item.Username,
+                    CreatedAt = item.CreatedAt,
+                    NeedProducts = item.NeedProducts
+                };
+
+                response.Add(data);
+            }
+
+
+
+            return Ok(new { IsSuccess = true, Result = response, Message = "Need list return value!" });
+
+        }
+
+
     }
 }
