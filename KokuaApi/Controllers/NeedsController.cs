@@ -36,7 +36,7 @@ namespace KokuaApi.Controllers
 
 
         [Route("Create-Needs")]
-        [Authorize(Roles = "Beneficiary")]
+        //[authorize(roles = "beneficiary")]
         [HttpPost]
         [EnableCors("MyPolicy")]
         public async Task<IActionResult> InsertNeed(Needs model)
@@ -58,7 +58,8 @@ namespace KokuaApi.Controllers
                 {
                     return Ok(new { IsError = true, Message = "This title already taken!" });
                 }
-
+                var now = DateTime.UtcNow;
+                model.CreatedAt = now;
                 model.Username = username;
 
                 _uow.Needs.Insert(model);
@@ -68,19 +69,20 @@ namespace KokuaApi.Controllers
                     _uow.NeedProducts.Insert(product);
 
                 }
-
             }
             await _uow.Complete();
 
             return Ok();
 
         }
+
         [Route("Get-Needs")]
         //[Authorize(Roles = "Volunteer")]
         [HttpGet]
         [EnableCors("MyPolicy")]
         public async Task<IActionResult> GetBeneficiaryNeed()
         {
+            var x = OrderStatus.Waiting;
             var needsList = await _uow.Needs.WhereAsync(a => a.OrderStatus == OrderStatus.Waiting);
             IList<VolunteerNeedsResponse> response = new List<VolunteerNeedsResponse>();
 
@@ -107,6 +109,38 @@ namespace KokuaApi.Controllers
 
 
             return Ok(new { IsSuccess = true, Result = response, Message = "Need list return value!" });
+
+        }
+
+        [Route("Take-Needs")]
+        //[authorize(roles = "volunteer")]
+        [HttpPost]
+        [EnableCors("MyPolicy")]
+        public async Task<IActionResult> InsertNeed(TakeNeedsResponse takenNeed)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return Ok();
+            }
+
+            var username = HttpContext.User.Identity.Name;
+
+            if (takenNeed != null)
+            {
+
+                var need = await _uow.Needs.WhereAsync(a => a.Id == takenNeed.Id);
+
+                var user = await _userManager.FindByNameAsync(takenNeed.VolunteerUsername);
+                if (user != null && need != null) { 
+                
+                
+                }
+
+            }
+            await _uow.Complete();
+
+            return Ok();
 
         }
 

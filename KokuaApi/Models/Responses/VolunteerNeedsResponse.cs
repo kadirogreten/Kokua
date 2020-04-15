@@ -16,4 +16,16 @@ namespace KokuaApi.Models
 
         public IEnumerable<NeedProducts> NeedProducts { get; set; }
     }
+    public class TakeNeedsResponse
+    {
+        public string Id { get; set; }
+
+        public string BeneficiaryUsername { get; set; }
+
+        public string VolunteerUsername { get; set; }
+
+        public DateTime AcceptedAt { get; set; }
+
+        public OrderStatus OrderStatus { get; set; } = OrderStatus.Accepted;
+    }
 }
