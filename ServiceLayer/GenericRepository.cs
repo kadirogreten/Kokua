@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using ServiceStack;
+using MongoDB.Bson;
 
 namespace ServiceLayer
 {
@@ -64,15 +65,19 @@ namespace ServiceLayer
         public virtual void Update(TEntity entity)
         {
 
+            var id = entity.GetId();
+            var docId = new ObjectId(id.ToString());
+
             ConfigDbSet();
-            _context.AddCommand(() => DbSet.ReplaceOneAsync(Builders<TEntity>.Filter.Eq("_id", entity.GetId()), entity));
+            _context.AddCommand(() => DbSet.ReplaceOneAsync(Builders<TEntity>.Filter.Eq("_id", docId), entity));
         }
 
         public void Delete(TEntity entity)
         {
-
+            var id = entity.GetId();
+            var docId = new ObjectId(id.ToString());
             ConfigDbSet();
-            _context.AddCommand(() => DbSet.DeleteOneAsync(Builders<TEntity>.Filter.Eq("_id", entity)));
+            _context.AddCommand(() => DbSet.DeleteOneAsync(Builders<TEntity>.Filter.Eq("_id", docId)));
         }
 
         public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate)

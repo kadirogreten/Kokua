@@ -25,6 +25,8 @@ namespace KokuaApi.Models
         public string WhoAmI { get; set; }
 
         public IEnumerable<object> Needs { get; set; }
+
+        public int NeedsCount { get; set; }
     }
 
     public class UserDataPostResponse

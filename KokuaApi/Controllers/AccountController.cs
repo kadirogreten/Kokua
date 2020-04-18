@@ -38,7 +38,7 @@ namespace KokuaApi.Controllers
 
         [Route("Register")]
         [HttpPost]
-        public async Task<StatusMessageResponseModel> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             KokuaUser user = new KokuaUser
             {
@@ -68,7 +68,8 @@ namespace KokuaApi.Controllers
                 if (model.UserType == UserType.Beneficiary)
                 {
                     roleName = "Beneficiary";
-                }else
+                }
+                else
                 {
                     roleName = "Volunteer";
                 }
@@ -94,7 +95,7 @@ namespace KokuaApi.Controllers
 
                 status.Messages.Add("User created a new account with password.");
 
-                return status;
+                return Ok(new { IsSuccess = true, Result = status, Message = "User created a new account with password!" });
             }
 
             status.IsError = true;
@@ -109,7 +110,7 @@ namespace KokuaApi.Controllers
                 status.Messages.Add(item.Description);
             }
 
-            return status;
+            return Ok(new { IsSuccess = false, Result = status, Message = "Unexpected Errors!" }); ;
         }
 
 
@@ -121,10 +122,14 @@ namespace KokuaApi.Controllers
             var username = HttpContext.User.Identity.Name;
 
             var user = await _userManager.FindByNameAsync(username);
-            var needs = await _uow.Needs.WhereAsync(a => a.Username == username);
 
-            if (user != null)
+
+            if (user.UserType == UserType.Volunteer)
             {
+
+                var needs = await _uow.Needs.WhereAsync(a => a.AcceptedUsername == user.UserName);
+
+
                 var response = new UserDataResponse
                 {
                     Name = user.Name,
@@ -141,13 +146,46 @@ namespace KokuaApi.Controllers
                         createdAt = a.CreatedAt,
                         acceptedDate = a.AcceptedDate,
                         completedDate = a.CompletedDate,
-                        needProducts = a.NeedProducts.Select(a => new { productDescription = a.ProductDescription})
+                        needProducts = a.NeedProducts.Select(a => new {id = a.Id ,productDescription = a.ProductDescription })
                     }),
                     PhoneNumber = user.PhoneNumber,
-                    ProfileImage = user.ProfileImage
+                    ProfileImage = user.ProfileImage,
+                    NeedsCount = needs.ToList().Count > 0 ? needs.ToList().Count : 0
                 };
 
-                return Ok(response);
+                return Ok(new { IsSuccess = true, Result = response, Message = "User return a value!" });
+            }
+
+
+            if (user != null)
+            {
+
+                var needs = await _uow.Needs.WhereAsync(a => a.Username == user.UserName);
+
+                var response = new UserDataResponse
+                {
+                    Name = user.Name,
+                    Surname = user.Surname,
+                    WhoAmI = user.WhoAmI,
+                    Address = user.Address,
+                    Age = user.Age,
+                    Needs = needs.Select(a => new
+                    {
+                        id = a.Id,
+                        title = a.Title,
+                        username = a.Username,
+                        orderStatus = a.OrderStatus,
+                        createdAt = a.CreatedAt,
+                        acceptedDate = a.AcceptedDate,
+                        completedDate = a.CompletedDate,
+                        needProducts = a.NeedProducts.Select(a => new { productDescription = a.ProductDescription })
+                    }),
+                    PhoneNumber = user.PhoneNumber,
+                    ProfileImage = user.ProfileImage,
+                    NeedsCount = needs.ToList().Count > 0 ? needs.ToList().Count : 0
+                };
+
+                return Ok(new { IsSuccess = true, Result = response, Message = "User return a value!" });
             }
             string message = "User is not defined!";
 
@@ -156,7 +194,7 @@ namespace KokuaApi.Controllers
             statusMessage.Messages.Add(message);
 
 
-            return Ok(statusMessage);
+            return Ok(new { IsSuccess = false, Result = statusMessage, Message = "User return null!" });
 
 
 
@@ -224,7 +262,7 @@ namespace KokuaApi.Controllers
                 };
 
 
-                return Ok(response);
+                return Ok(new { IsSuccess = true, Result = response, Message = "User updated! return a value!" });
             }
 
 

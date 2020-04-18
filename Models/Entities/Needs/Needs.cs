@@ -17,9 +17,11 @@ namespace Models
 
         public string Username { get; set; }
 
+        public string AcceptedUsername { get; set; }
+
         public OrderStatus OrderStatus { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; }
 
         public DateTime? AcceptedDate { get; set; }
 
