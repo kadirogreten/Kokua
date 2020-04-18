@@ -123,7 +123,7 @@ namespace KokuaApi.Controllers
 
         [Route("Delete-Need")]
         [Authorize(Roles = "Beneficiary")]
-        [HttpDelete]
+        [HttpPost]
         [EnableCors("MyPolicy")]
         public async Task<IActionResult> DeleteNeed(TakeNeedsResponse model)
         {
@@ -256,7 +256,7 @@ namespace KokuaApi.Controllers
 
         [Route("Delete-Need-Product")]
         [Authorize(Roles = "Beneficiary")]
-        [HttpDelete]
+        [HttpPost]
         [EnableCors("MyPolicy")]
         public async Task<IActionResult> DeleteNeedProduct(TakeNeedProductResponse model)
         {
@@ -268,13 +268,14 @@ namespace KokuaApi.Controllers
 
             if (!string.IsNullOrWhiteSpace(model.ProductId))
             {
+                var username = HttpContext.User.Identity.Name;
                 var product = await _uow.NeedProducts.FindAsync(a => a.Id == model.ProductId);
                 if (product == null)
                 {
                     return Ok(new { IsSuccess = false, Result = "", Message = "Need product return null!" });
                 }
 
-                var need = _uow.Needs.Find(a => a.Id == product.NeedId);
+                var need = _uow.Needs.Find(a => a.Id == product.NeedId && a.Username == username);
 
                 if (need == null)
                 {
