@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
-using Models.Entities;
+using Models;
 
 namespace Models
 {
@@ -26,6 +26,7 @@ namespace Models
         public DateTime? Age { get; set; }
         public string Address { get; set; }
         public string ProfileImage { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 
     public class CustomClaimsPrincipalFactory : UserClaimsPrincipalFactory<KokuaUser>

@@ -31,4 +31,26 @@ namespace Models
 		[Description("Beneficiary")]
 		Beneficiary
 	}
+
+
+	[JsonConverter(typeof(JsonStringEnumConverter))]
+	public enum ReportType : byte
+	{
+		ReportProfile
+	}
+
+	[JsonConverter(typeof(JsonStringEnumConverter))]
+	public enum ReportSubject : byte
+	{
+
+		ImproperContent,
+		CopyrightViolation
+	}
+	[JsonConverter(typeof(JsonStringEnumConverter))]
+	public enum ReportStatus : byte
+	{
+		New,
+		InProgress,
+		Completed
+	}
 }

@@ -24,9 +24,30 @@ namespace KokuaApi.Models
 
         public string WhoAmI { get; set; }
 
-        public IEnumerable<object> Needs { get; set; }
+        public IEnumerable<UserProfileNeedResponse> Needs { get; set; }
 
         public int NeedsCount { get; set; }
+    }
+
+    public class UserProfileNeedResponse
+    {
+        public string Id { get; set; }
+        public string Title { get; set; }
+        public string Username { get; set; }
+        public OrderStatus OrderStatus { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? AcceptedDate { get; set; }
+        public DateTime? CompletedDate { get; set; }
+        public double Latitude { get; set; }
+
+        public double Longitude { get; set; }
+        public IEnumerable<UserProfileNeedProductResponse> NeedProducts { get; set; }
+    }
+
+    public class UserProfileNeedProductResponse
+    {
+        public string Id { get; set; }
+        public string ProductDescription { get; set; }
     }
 
     public class UserDataPostResponse

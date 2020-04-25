@@ -130,6 +130,7 @@ namespace KokuaApi.Controllers
                 var needs = await _uow.Needs.WhereAsync(a => a.AcceptedUsername == user.UserName);
 
 
+
                 var response = new UserDataResponse
                 {
                     Name = user.Name,
@@ -137,16 +138,18 @@ namespace KokuaApi.Controllers
                     WhoAmI = user.WhoAmI,
                     Address = user.Address,
                     Age = user.Age,
-                    Needs = needs.Select(a => new
+                    Needs = needs.Select(a => new UserProfileNeedResponse
                     {
-                        id = a.Id,
-                        title = a.Title,
-                        username = a.Username,
-                        orderStatus = a.OrderStatus,
-                        createdAt = a.CreatedAt,
-                        acceptedDate = a.AcceptedDate,
-                        completedDate = a.CompletedDate,
-                        needProducts = a.NeedProducts.Select(a => new {id = a.Id ,productDescription = a.ProductDescription })
+                        Id = a.Id,
+                        Title = a.Title,
+                        Username = a.Username,
+                        OrderStatus = a.OrderStatus,
+                        CreatedAt = a.CreatedAt,
+                        AcceptedDate = a.AcceptedDate,
+                        CompletedDate = a.CompletedDate,
+                        Longitude = a.Longitude,
+                        Latitude = a.Latitude,
+                        NeedProducts = a.NeedProducts == null ? new List<NeedProducts>().Select(b => new UserProfileNeedProductResponse()) : a.NeedProducts.Select(b => new UserProfileNeedProductResponse { Id = b.Id, ProductDescription = b.ProductDescription })
                     }),
                     PhoneNumber = user.PhoneNumber,
                     ProfileImage = user.ProfileImage,
@@ -169,16 +172,18 @@ namespace KokuaApi.Controllers
                     WhoAmI = user.WhoAmI,
                     Address = user.Address,
                     Age = user.Age,
-                    Needs = needs.Select(a => new
+                    Needs = needs.Select(a => new UserProfileNeedResponse
                     {
-                        id = a.Id,
-                        title = a.Title,
-                        username = a.Username,
-                        orderStatus = a.OrderStatus,
-                        createdAt = a.CreatedAt,
-                        acceptedDate = a.AcceptedDate,
-                        completedDate = a.CompletedDate,
-                        needProducts = a.NeedProducts.Select(a => new { productDescription = a.ProductDescription })
+                        Id = a.Id,
+                        Title = a.Title,
+                        Username = a.Username,
+                        OrderStatus = a.OrderStatus,
+                        CreatedAt = a.CreatedAt,
+                        AcceptedDate = a.AcceptedDate,
+                        CompletedDate = a.CompletedDate,
+                        Longitude = a.Longitude,
+                        Latitude = a.Latitude,
+                        NeedProducts = a.NeedProducts == null ? new List<NeedProducts>().Select(b => new UserProfileNeedProductResponse()) : a.NeedProducts.Select(b => new UserProfileNeedProductResponse { Id = b.Id, ProductDescription = b.ProductDescription })
                     }),
                     PhoneNumber = user.PhoneNumber,
                     ProfileImage = user.ProfileImage,
@@ -274,6 +279,31 @@ namespace KokuaApi.Controllers
 
 
             return Ok(statusMessage);
+        }
+
+
+
+        [Route("LockoutUser")]
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> LockoutUser(LockoutUserViewModel model)
+        {
+
+            var user = await _userManager.FindByNameAsync(model.Username);
+
+            if (user == null)
+            {
+                return Ok(new { IsSuccess = false, Result = "", Message = "User undefined!" });
+            }
+
+
+            user.LockoutEnabled = true;
+            user.LockoutEnd = model.ExpireDate;
+            user.IsActive = false;
+
+            await _userManager.UpdateAsync(user);
+
+            return Ok(new { IsSuccess = true, Result = new { NameSurname = $"{user.Name} {user.Surname}", LockoutEnd = user.LockoutEnd, UserActiveStatus = user.IsActive }, Message = "User updated! return a value!" });
         }
 
 

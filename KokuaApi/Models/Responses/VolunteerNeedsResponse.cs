@@ -17,6 +17,10 @@ namespace KokuaApi.Models
         public DateTime CreatedAt { get; set; }
 
         public OrderStatus OrderStatus { get; set; }
+
+        public LocationViewModel Location  { get; set; }
+
+        public double Distance { get; set; }
     }
 
 

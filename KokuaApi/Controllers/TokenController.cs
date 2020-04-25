@@ -42,16 +42,31 @@ namespace KokuaApi.Controllers
 
             if (model.Grant_Type != "password")
             {
-                return BadRequest(new { Error = "Invalid grant type!" });
+
+                return BadRequest(new { IsSuccess = false, Result = "", Message = "Invalid grant type!" });
             }
 
             if (await IsUsernameAndPassword(model.Email, model.Password))
             {
+                var user = await _userManager.FindByNameAsync(model.Email);
+
+                if (user.IsActive == false)
+                {
+                    if (user.LockoutEnd < DateTimeOffset.Now)
+                    {
+                        user.LockoutEnd = null;
+                        user.IsActive = true;
+                        return new ObjectResult(await GenerateToken(model.Email));
+                    }
+                    return BadRequest(new { IsSuccess = false, Result = "", Message = $"User banned until {user.LockoutEnd}!" });
+
+                }
+
                 return new ObjectResult(await GenerateToken(model.Email));
             }
             else
             {
-                return BadRequest(new { Error = "Username password is wrong!" });
+                return BadRequest(new { IsSuccess = false, Result = "", Message = "Username password is wrong!" });
             }
         }
 

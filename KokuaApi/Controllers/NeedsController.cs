@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Models;
 using MongoDB.Bson;
 using ServiceLayer;
+using GeoCoordinatePortable;
 
 namespace KokuaApi.Controllers
 {
@@ -33,6 +34,35 @@ namespace KokuaApi.Controllers
             _logger = logger;
             _uow = uow;
         }
+
+
+
+        #region helper
+
+        private double GetDistance(LocationViewModel userLocation, LocationViewModel beneficiaryLocation)
+        {
+
+           
+            GeoCoordinate coordinateUser = new GeoCoordinate();
+            GeoCoordinate coordinateBeneficary = new GeoCoordinate();
+            try
+            {
+                coordinateUser = new GeoCoordinate(Convert.ToDouble(userLocation.Latitude.Replace(",", ".")), Convert.ToDouble(userLocation.Longitude.Replace(",", ".")));
+                coordinateBeneficary = new GeoCoordinate(Convert.ToDouble(beneficiaryLocation.Latitude.Replace(",", ".")), Convert.ToDouble(beneficiaryLocation.Longitude.Replace(",", ".")));
+            }
+            catch (Exception ex)
+            {
+                coordinateUser = new GeoCoordinate(double.Parse(userLocation.Latitude.Replace(".", ",")), double.Parse(userLocation.Longitude.Replace(".", ",")));
+                coordinateBeneficary = new GeoCoordinate(double.Parse(beneficiaryLocation.Latitude.Replace(".", ",")), double.Parse(beneficiaryLocation.Longitude.Replace(".", ",")));
+            }
+
+            var distance = coordinateUser.GetDistanceTo(coordinateBeneficary);
+
+            return distance;
+
+        }
+
+        #endregion
 
 
 
@@ -67,12 +97,49 @@ namespace KokuaApi.Controllers
                     CreatedAt = DateTime.Now,
                     Title = model.Title,
                     Username = username,
+                    Latitude = model.Latitude,
+                    Longitude = model.Longitude,
                 };
 
+
+
+
+
+                if (need == null)
+                {
+                    return Ok(new { IsSuccess = false, Result = "", Message = "Need list return null value!" });
+                }
+
+                if (need.NeedProducts == null)
+                {
+                    need.NeedProducts = new List<NeedProducts>();
+                }
+
+                NeedProducts product;
+                List<NeedProducts> liste = new List<NeedProducts>();
+                foreach (var item in model.ProductDescription)
+                {
+                    product = new NeedProducts
+                    {
+                        Id = ObjectId.GenerateNewId().ToString(),
+                        NeedId = need.Id,
+                        ProductDescription = item
+                    };
+
+                    liste.Add(product);
+
+                    _uow.NeedProducts.Insert(product);
+                }
+
+
+
+
+                need.NeedProducts = liste;
 
                 _uow.Needs.Insert(need);
 
                 await _uow.Complete();
+
 
                 return Ok(new
                 {
@@ -83,7 +150,8 @@ namespace KokuaApi.Controllers
                         Title = need.Title,
                         CreatedAt = need.CreatedAt,
                         OrderStatus = need.OrderStatus,
-                        Username = username
+                        Username = username,
+                        NeedProducts = liste
                     },
 
                     Message = "Need list created!"
@@ -281,7 +349,7 @@ namespace KokuaApi.Controllers
                 {
                     return Ok(new { IsSuccess = false, Result = "", Message = "Need product return null!" });
                 }
-                
+
                 _uow.NeedProducts.Delete(product);
 
                 await _uow.Complete();
@@ -306,14 +374,26 @@ namespace KokuaApi.Controllers
 
         [Route("Feed-For-Volunteer")]
         [Authorize(Roles = "Volunteer")]
-        [HttpGet]
+        [HttpPost]
         [EnableCors("MyPolicy")]
-        public async Task<IActionResult> Feed()
+        public async Task<IActionResult> Feed(LocationViewModel volunteerLocation)
         {
 
             var username = HttpContext.User.Identity.Name;
 
-            var needsList = await _uow.Needs.WhereAsync(a => a.OrderStatus == OrderStatus.Waiting && a.NeedProducts.Any() && a.Username != username);
+            GeoCoordinate coordinate = new GeoCoordinate();
+            try
+            {
+                coordinate = new GeoCoordinate(Convert.ToDouble(volunteerLocation.Latitude.Replace(",", ".")), Convert.ToDouble(volunteerLocation.Longitude.Replace(",", ".")));
+            }
+            catch (Exception ex)
+            {
+                coordinate = new GeoCoordinate(double.Parse(volunteerLocation.Latitude.Replace(".", ",")), double.Parse(volunteerLocation.Longitude.Replace(".", ",")));
+            }
+
+            var needsList = _uow.Needs.Where(a => a.OrderStatus == OrderStatus.Waiting && a.NeedProducts.Any() && a.Username != username).ToList();
+
+
             IList<VolunteerNeedsResponse> response = new List<VolunteerNeedsResponse>();
 
             if (!needsList.Any())
@@ -325,19 +405,31 @@ namespace KokuaApi.Controllers
             foreach (var item in needsList)
             {
                 var beneficiaryUser = await _userManager.FindByNameAsync(item.Username);
+                GeoCoordinate coordinateBeneficary = new GeoCoordinate(item.Latitude,item.Longitude);
+                var mesafe = coordinate.GetDistanceTo(coordinateBeneficary);
 
-
-                var data = new VolunteerNeedsResponse
+                if (mesafe > double.Parse(volunteerLocation.Range))
                 {
-                    NeedId = item.Id,
-                    Title = item.Title,
-                    OrderStatus = item.OrderStatus,
-                    BeneficiaryNameSurname = beneficiaryUser== null ? "" : $"{beneficiaryUser.Name} {beneficiaryUser.Surname}",
-                    ProfileImage = beneficiaryUser.ProfileImage,
-                    CreatedAt = item.CreatedAt
-                };
 
-                response.Add(data);
+                }else
+                {
+                    var data = new VolunteerNeedsResponse
+                    {
+                        NeedId = item.Id,
+                        Title = item.Title,
+                        OrderStatus = item.OrderStatus,
+                        BeneficiaryNameSurname = beneficiaryUser == null ? "" : $"{beneficiaryUser.Name} {beneficiaryUser.Surname}",
+                        ProfileImage = beneficiaryUser.ProfileImage,
+                        CreatedAt = item.CreatedAt,
+                        Location = new LocationViewModel { Latitude = item.Latitude.ToString(), Longitude = item.Longitude.ToString() },
+                        Distance = GetDistance(volunteerLocation, new LocationViewModel { Latitude = item.Latitude.ToString(), Longitude = item.Longitude.ToString() })
+                    };
+
+                    response.Add(data);
+
+                }
+
+                
             }
 
 
@@ -461,6 +553,115 @@ namespace KokuaApi.Controllers
                     CreatedAt = need.CreatedAt,
                     NeedProducts = need.NeedProducts,
                     AcceptedDate = need.AcceptedDate
+                },
+                Message = "Need list return value!"
+            });
+
+        }
+
+
+        [Route("Complete-Need")]
+        [Authorize(Roles = "Beneficiary")]
+        [HttpPost]
+        [EnableCors("MyPolicy")]
+        public async Task<IActionResult> CompleteNeed(TakeNeedsResponse model)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return Ok();
+            }
+
+            var username = HttpContext.User.Identity.Name;
+
+
+            var need = await _uow.Needs.FindAsync(a => a.Id == model.NeedId && a.OrderStatus == OrderStatus.Accepted);
+
+            if (need == null)
+            {
+                return Ok(new { IsSuccess = false, Result = "", Message = "Need return null!" });
+            }
+
+            need.CompletedDate = DateTime.Now;
+
+            need.OrderStatus = OrderStatus.Completed;
+
+            _uow.Needs.Update(need);
+            var order = new Order
+            {
+                ID = ObjectId.GenerateNewId().ToString(),
+                OrderStatus = OrderStatus.Completed,
+                NeedId = need.Id,
+                OrderedDate = DateTime.Now,
+                Username = username,
+                RequestName = need.AcceptedUsername
+            };
+
+            _uow.Order.Insert(order);
+            await _uow.Complete();
+
+            var acceptedUser = await _userManager.FindByNameAsync(need.AcceptedUsername);
+
+            return Ok(new
+            {
+                IsSuccess = true,
+                Result = new
+                {
+                    Title = need.Title,
+                    OrderStatus = need.OrderStatus,
+                    AcceptedNameSurname = $"{acceptedUser.Name} {acceptedUser.Surname}",
+                    CreatedAt = need.CreatedAt,
+                    NeedProducts = need.NeedProducts,
+                    AcceptedDate = need.AcceptedDate,
+                    CompletedDate = need.CompletedDate
+                },
+                Message = "Need list return value!"
+            });
+
+        }
+
+        [Route("Cancel-Need")]
+        [Authorize(Roles = "Beneficiary")]
+        [HttpPost]
+        [EnableCors("MyPolicy")]
+        public async Task<IActionResult> CancelNeed(TakeNeedsResponse model)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return Ok();
+            }
+
+            var username = HttpContext.User.Identity.Name;
+
+
+            var need = await _uow.Needs.FindAsync(a => a.Id == model.NeedId && a.OrderStatus == OrderStatus.Waiting);
+
+            if (need == null)
+            {
+                return Ok(new { IsSuccess = false, Result = "", Message = "Need return null!" });
+            }
+
+            need.AcceptedDate = null;
+
+            need.OrderStatus = OrderStatus.Waiting;
+            need.AcceptedUsername = null;
+
+            _uow.Needs.Update(need);
+            await _uow.Complete();
+
+           
+
+            return Ok(new
+            {
+                IsSuccess = true,
+                Result = new
+                {
+                    Title = need.Title,
+                    OrderStatus = need.OrderStatus,                  
+                    CreatedAt = need.CreatedAt,
+                    NeedProducts = need.NeedProducts,
+                   
                 },
                 Message = "Need list return value!"
             });

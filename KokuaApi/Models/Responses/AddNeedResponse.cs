@@ -8,5 +8,8 @@ namespace KokuaApi.Models
     public class AddNeedResponse
     {
         public string Title { get; set; }
+        public string[] ProductDescription { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }
