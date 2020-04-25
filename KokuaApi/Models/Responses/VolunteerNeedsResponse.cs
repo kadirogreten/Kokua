@@ -10,6 +10,8 @@ namespace KokuaApi.Models
 
         public string Title { get; set; }
 
+        public string BeneficiaryUsername { get; set; }
+
         public string BeneficiaryNameSurname { get; set; }
 
         public string ProfileImage { get; set; }

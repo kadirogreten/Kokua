@@ -206,6 +206,96 @@ namespace KokuaApi.Controllers
         }
 
         [HttpPost]
+        [Route("RequestProfile")]
+        [Authorize]
+        public async Task<IActionResult> Profile(UsernameViewModel model)
+        {
+
+            var user = await _userManager.FindByNameAsync(model.Requestname);
+
+
+            if (user.UserType == UserType.Volunteer)
+            {
+
+                var needs = await _uow.Needs.WhereAsync(a => a.AcceptedUsername == user.UserName);
+
+
+
+                var response = new UserDataResponse
+                {
+                    Name = user.Name,
+                    Surname = user.Surname,
+                    WhoAmI = user.WhoAmI,
+                    Address = user.Address,
+                    Age = user.Age,
+                    Needs = needs.Select(a => new UserProfileNeedResponse
+                    {
+                        Id = a.Id,
+                        Title = a.Title,
+                        Username = a.Username,
+                        OrderStatus = a.OrderStatus,
+                        CreatedAt = a.CreatedAt,
+                        AcceptedDate = a.AcceptedDate,
+                        CompletedDate = a.CompletedDate,
+                        Longitude = a.Longitude,
+                        Latitude = a.Latitude,
+                        NeedProducts = a.NeedProducts == null ? new List<NeedProducts>().Select(b => new UserProfileNeedProductResponse()) : a.NeedProducts.Select(b => new UserProfileNeedProductResponse { Id = b.Id, ProductDescription = b.ProductDescription })
+                    }),
+                    PhoneNumber = user.PhoneNumber,
+                    ProfileImage = user.ProfileImage,
+                    NeedsCount = needs.ToList().Count > 0 ? needs.ToList().Count : 0
+                };
+
+                return Ok(new { IsSuccess = true, Result = response, Message = "User return a value!" });
+            }
+
+
+            if (user != null)
+            {
+
+                var needs = await _uow.Needs.WhereAsync(a => a.Username == user.UserName);
+
+                var response = new UserDataResponse
+                {
+                    Name = user.Name,
+                    Surname = user.Surname,
+                    WhoAmI = user.WhoAmI,
+                    Address = user.Address,
+                    Age = user.Age,
+                    Needs = needs.Select(a => new UserProfileNeedResponse
+                    {
+                        Id = a.Id,
+                        Title = a.Title,
+                        Username = a.Username,
+                        OrderStatus = a.OrderStatus,
+                        CreatedAt = a.CreatedAt,
+                        AcceptedDate = a.AcceptedDate,
+                        CompletedDate = a.CompletedDate,
+                        Longitude = a.Longitude,
+                        Latitude = a.Latitude,
+                        NeedProducts = a.NeedProducts == null ? new List<NeedProducts>().Select(b => new UserProfileNeedProductResponse()) : a.NeedProducts.Select(b => new UserProfileNeedProductResponse { Id = b.Id, ProductDescription = b.ProductDescription })
+                    }),
+                    PhoneNumber = user.PhoneNumber,
+                    ProfileImage = user.ProfileImage,
+                    NeedsCount = needs.ToList().Count > 0 ? needs.ToList().Count : 0
+                };
+
+                return Ok(new { IsSuccess = true, Result = response, Message = "User return a value!" });
+            }
+            string message = "User is not defined!";
+
+            var statusMessage = new StatusMessageResponseModel();
+            statusMessage.IsError = true;
+            statusMessage.Messages.Add(message);
+
+
+            return Ok(new { IsSuccess = false, Result = statusMessage, Message = "User return null!" });
+
+
+
+        }
+
+        [HttpPost]
         [Route("Profile")]
         [Authorize]
         public async Task<IActionResult> Profile(UserDataPostResponse model)

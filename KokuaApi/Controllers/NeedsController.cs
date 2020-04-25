@@ -418,6 +418,7 @@ namespace KokuaApi.Controllers
                         NeedId = item.Id,
                         Title = item.Title,
                         OrderStatus = item.OrderStatus,
+                        BeneficiaryUsername = beneficiaryUser.Name,
                         BeneficiaryNameSurname = beneficiaryUser == null ? "" : $"{beneficiaryUser.Name} {beneficiaryUser.Surname}",
                         ProfileImage = beneficiaryUser.ProfileImage,
                         CreatedAt = item.CreatedAt,
@@ -502,7 +503,8 @@ namespace KokuaApi.Controllers
                 NeedId = model.NeedId,
                 NeedProducts = need.NeedProducts.ToList(),
                 ProductsCount = need.NeedProducts.Count(),
-                BeneficiaryNameSurname = $"{beneficiaryUser.Name} {beneficiaryUser.Surname}"
+                BeneficiaryNameSurname = $"{beneficiaryUser.Name} {beneficiaryUser.Surname}",
+                BeneficiaryUsername = beneficiaryUser.Name
             };
 
 
