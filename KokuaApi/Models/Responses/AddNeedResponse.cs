@@ -11,5 +11,6 @@ namespace KokuaApi.Models
         public string[] ProductDescription { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public string Note { get; set; }
     }
 }

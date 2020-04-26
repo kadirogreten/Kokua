@@ -42,7 +42,7 @@ namespace KokuaApi.Controllers
         private double GetDistance(LocationViewModel userLocation, LocationViewModel beneficiaryLocation)
         {
 
-           
+
             GeoCoordinate coordinateUser = new GeoCoordinate();
             GeoCoordinate coordinateBeneficary = new GeoCoordinate();
             try
@@ -99,6 +99,7 @@ namespace KokuaApi.Controllers
                     Username = username,
                     Latitude = model.Latitude,
                     Longitude = model.Longitude,
+                    Note = model.Note
                 };
 
 
@@ -405,13 +406,14 @@ namespace KokuaApi.Controllers
             foreach (var item in needsList)
             {
                 var beneficiaryUser = await _userManager.FindByNameAsync(item.Username);
-                GeoCoordinate coordinateBeneficary = new GeoCoordinate(item.Latitude,item.Longitude);
+                GeoCoordinate coordinateBeneficary = new GeoCoordinate(item.Latitude, item.Longitude);
                 var mesafe = coordinate.GetDistanceTo(coordinateBeneficary);
 
                 if (mesafe > double.Parse(volunteerLocation.Range))
                 {
 
-                }else
+                }
+                else
                 {
                     var data = new VolunteerNeedsResponse
                     {
@@ -422,14 +424,15 @@ namespace KokuaApi.Controllers
                         ProfileImage = beneficiaryUser.ProfileImage,
                         CreatedAt = item.CreatedAt,
                         Location = new LocationViewModel { Latitude = item.Latitude.ToString(), Longitude = item.Longitude.ToString() },
-                        Distance = GetDistance(volunteerLocation, new LocationViewModel { Latitude = item.Latitude.ToString(), Longitude = item.Longitude.ToString() })
+                        Distance = GetDistance(volunteerLocation, new LocationViewModel { Latitude = item.Latitude.ToString(), Longitude = item.Longitude.ToString() }),
+                        Note = item.Note
                     };
 
                     response.Add(data);
 
                 }
 
-                
+
             }
 
 
@@ -650,7 +653,7 @@ namespace KokuaApi.Controllers
             _uow.Needs.Update(need);
             await _uow.Complete();
 
-           
+
 
             return Ok(new
             {
@@ -658,10 +661,10 @@ namespace KokuaApi.Controllers
                 Result = new
                 {
                     Title = need.Title,
-                    OrderStatus = need.OrderStatus,                  
+                    OrderStatus = need.OrderStatus,
                     CreatedAt = need.CreatedAt,
                     NeedProducts = need.NeedProducts,
-                   
+
                 },
                 Message = "Need list return value!"
             });

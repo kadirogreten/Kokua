@@ -32,6 +32,8 @@ namespace Models
         public double Longitude { get; set; }
 
         public IEnumerable<NeedProducts> NeedProducts { get; set; }
+
+        public string Note { get; set; }
     }
 
 

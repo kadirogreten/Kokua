@@ -21,6 +21,8 @@ namespace KokuaApi.Models
         public LocationViewModel Location  { get; set; }
 
         public double Distance { get; set; }
+
+        public string Note { get; set; }
     }
 
 
