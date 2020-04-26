@@ -11,6 +11,8 @@ namespace KokuaApi.Models
         public string NeedId { get; set; }
         public List<NeedProducts> NeedProducts { get; set; }
         public int ProductsCount { get; set; }
+        public string BeneficiaryUsername { get; set; }
         public string BeneficiaryNameSurname { get; set; }
+
     }
 }
